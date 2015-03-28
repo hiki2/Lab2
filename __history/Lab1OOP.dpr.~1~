@@ -1,0 +1,16 @@
+program Lab1OOP;
+
+uses
+  Vcl.Forms,
+  MainUnit in 'MainUnit.pas' {MainForm},
+  Shapes in 'Shapes.pas',
+  DrawShapes in 'DrawShapes.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TMainForm, MainForm);
+  Application.Run;
+end.

@@ -1,0 +1,225 @@
+unit Shape;
+
+interface
+
+uses
+  Graphics,Math,System.Types,Vcl.ExtCtrls;
+
+Type
+  TDot = array of TPoint;
+  TShapes = class
+    private
+      fColor : TColor;
+      function GetColor : TColor;
+      procedure SetColor(NewColor : TColor);
+    public
+      procedure Draw(var Image : TImage); virtual; abstract;
+      //function GetType : TShapes; virtual;
+    published
+      property Color : TColor read GetColor write SetColor default clBlack;
+  end;
+
+  TPixel = class(TShapes)
+    public
+      FirstPos : TPoint;
+      Constructor Create(FirstPos : TPoint);
+      procedure Draw(var Image : TImage); override;
+      //function GetType : TPixel; overload;
+  end;
+
+  TLine = class(TPixel)
+    public
+      SecondPos : TPoint;
+      Constructor Create(FirstPos : TPoint; SecondPos : TPoint);
+      procedure Draw(var Image : TImage); override;
+      //function GetType : TLine; overload;
+  end;
+
+  TColoredShapes = class(TLine)
+    private
+      fFillColor : TColor;
+      function GetFillColor : TColor;
+      procedure SetFillColor(NewFillColor : TColor);
+    public
+      procedure Draw(var Image : TImage); override; abstract;
+      //function GetType : TColoredShapes; virtual;
+    published
+      property FillColor : TColor read GetFillColor write SetFillColor default clWhite;
+  end;
+
+  TTri = class(TColoredShapes)
+    public
+      ThirdPos : TPoint;
+      Constructor Create(FirstPos : TPoint; SecondPos : TPoint; ThirdPos : TPoint);
+      //function GetType : TTri; overload;
+      procedure Draw(var Image : TImage); override;
+  end;
+
+  TRect = class(TColoredShapes)
+    public
+      Constructor Create(FirstPos : TPoint; SecondPos : TPoint);
+      //function GetType : TRect; overload;
+      procedure Draw(var Image : TImage); override;
+  end;
+
+  TEllipse = class(TColoredShapes)
+    public
+      Constructor Create(FirstPos : TPoint; SecondPos : TPoint);
+      //function GetType : TEllipse; overload;
+      procedure Draw(var Image : TImage); override;
+  end;
+
+  TPolygon = class(TColoredShapes)
+    public
+      PosArr : TDot;
+      Constructor Create(PosArr : TDot);
+      procedure Draw(var Image : TImage); override;
+  end;
+
+implementation
+
+  constructor TPixel.Create(FirstPos: TPoint);
+  begin
+    self.FirstPos := FirstPos;
+  end;
+
+  constructor TLine.Create(FirstPos: TPoint; SecondPos: TPoint);
+  begin
+    inherited Create(FirstPos);
+    self.SecondPos := SecondPos;
+  end;
+
+  constructor TTri.Create(FirstPos: TPoint; SecondPos: TPoint; ThirdPos: TPoint);
+  begin
+    inherited Create(FirstPos,SecondPos);
+    self.ThirdPos := ThirdPos;
+  end;
+
+  constructor TRect.Create(FirstPos: TPoint; SecondPos: TPoint);
+  begin
+    inherited Create(FirstPos,SecondPos);
+  end;
+
+  constructor TEllipse.Create(FirstPos: TPoint; SecondPos: TPoint);
+  begin
+    inherited Create(FirstPos,SecondPos);
+  end;
+
+  constructor TPolygon.Create(PosArr: TDot);
+  var
+    i:integer;
+  begin
+    SetLength(self.PosArr,Length(PosArr));
+    self.PosArr := Copy(PosArr,0,Length(PosArr));
+  end;
+
+  function TShapes.GetColor;
+  begin
+    result := self.fColor;
+  end;
+
+  procedure TShapes.SetColor(NewColor: TColor);
+  begin
+    self.fColor := NewColor;
+  end;
+
+  function TColoredShapes.GetFillColor;
+  begin
+    result := self.fFillColor;
+  end;
+
+  procedure TColoredShapes.SetFillColor(NewFillColor: TColor);
+  begin
+    self.fFillColor := NewFillColor;
+  end;
+
+
+  procedure TPixel.Draw(var Image : TImage);
+  begin
+    Image.Canvas.Pixels[self.FirstPos.X,self.FirstPos.Y] := self.fColor;
+  end;
+
+  procedure TLine.Draw(var Image : TImage);
+  begin
+    Image.Canvas.Pen.Color := fColor;
+    Image.Canvas.MoveTo(self.FirstPos.X,self.FirstPos.Y);
+    Image.Canvas.LineTo(self.SecondPos.X,self.SecondPos.Y);
+  end;
+
+  procedure TTri.Draw(var Image: TImage);
+  begin
+    Image.Canvas.Pen.Color := fColor;
+    Image.Canvas.Brush.Color := fFillColor;
+    Image.Canvas.Polygon([self.FirstPos,self.SecondPos,self.ThirdPos]);
+  end;
+
+  procedure TRect.Draw(var Image: TImage);
+  begin
+    Image.Canvas.Pen.Color := fColor;
+    Image.Canvas.Brush.Color := fFillColor;
+    Image.Canvas.Rectangle(self.FirstPos.X,self.FirstPos.Y,self.SecondPos.X,self.SecondPos.Y);
+  end;
+
+  procedure TEllipse.Draw(var Image: TImage);
+  begin
+    Image.Canvas.Pen.Color := fColor;
+    Image.Canvas.Brush.Color := fFillColor;
+    Image.Canvas.Ellipse(self.FirstPos.X,self.FirstPos.Y,self.SecondPos.X,self.SecondPos.Y);
+  end;
+
+  procedure TPolygon.Draw(var Image: TImage);
+  begin
+    Image.Canvas.Pen.Color := fColor;
+    Image.Canvas.Brush.Color := fFillColor;
+    Image.Canvas.Polygon(PosArr);
+  end;
+
+  {function TPixel.GetType : TPixel;
+  var
+    Pixel : TPixel;
+  begin
+    Pixel := TPixel.Create(self.FirstPos);
+    Pixel.Color := self.fColor;
+    result := Pixel;
+
+  end;
+
+  function TLine.GetType : TLine;
+  var
+    Line : TLine;
+  begin
+    Line := TLine.Create(self.FirstPos,self.SecondPos);
+    Line.Color := self.fColor;
+    result := Line;
+  end;
+
+  function TRect.GetType : TRect;
+  var
+    Rect : TRect;
+  begin
+    Rect := TRect.Create(self.FirstPos,self.SecondPos);
+    Rect.Color := self.fColor;
+    Rect.FillColor := self.fFillColor;
+    result := Rect;
+  end;
+
+  function TEllipse.GetType : TEllipse;
+  var
+    Ellipse : TEllipse;
+  begin
+    Ellipse := TEllipse.Create(self.FirstPos,self.SecondPos);
+    Ellipse.Color := self.fColor;
+    Ellipse.FillColor := self.fFillColor;
+    result := Ellipse;
+  end;
+
+  function TTri.GetType : TTri;
+  var
+    Tri : TTri;
+  begin
+    Tri := TTri.Create(self.FirstPos,self.SecondPos,self.ThirdPos);
+    Tri.Color := self.fColor;
+    Tri.FillColor := self.fFillColor;
+    result := Tri;
+  end;}
+end.
